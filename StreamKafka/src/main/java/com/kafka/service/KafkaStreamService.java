@@ -12,13 +12,11 @@ import java.util.Random;
 @Service
 public class KafkaStreamService {
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper;
+    private final KafkaTemplate<String, Transaction> kafkaTemplate;
 
 
-    public KafkaStreamService(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
+    public KafkaStreamService(KafkaTemplate<String, Transaction> kafkaTemplate, ObjectMapper objectMapper) {
         this.kafkaTemplate = kafkaTemplate;
-        this.objectMapper = objectMapper;
     }
 
     public String performTransaction() {
@@ -31,10 +29,7 @@ public class KafkaStreamService {
                     "USER_" + i,
                     amount, LocalDateTime.now().toString());
 
-
-            String txt = objectMapper.writeValueAsString(txn);
-
-            kafkaTemplate.send("transaction", transactionId, txt);
+            kafkaTemplate.send("transaction", transactionId, txn);
         }
 
         return "success";

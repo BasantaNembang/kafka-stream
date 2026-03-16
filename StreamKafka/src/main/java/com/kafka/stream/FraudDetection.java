@@ -2,13 +2,15 @@ package com.kafka.stream;
 
 
 import com.kafka.event.Transaction;
+import com.kafka.serdes.TransactionSerdes;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafkaStreams;
-import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Configuration
@@ -16,29 +18,19 @@ import tools.jackson.databind.ObjectMapper;
 public class FraudDetection {
 
     @Bean
-    public KStream<String, String> fraudDetectionSystem(StreamsBuilder builder){
+    public KStream<String, Transaction> fraudDetectionSystem(StreamsBuilder builder){
 
-        KStream<String, String> kStream =  builder.stream("transaction");
+        KStream<String, Transaction> kStream =
+                builder.stream("transaction", Consumed.with(Serdes.String(), new TransactionSerdes()));
 
-        KStream<String, String> filterData =  kStream.filter((k,v)->alert(v))
-                .peek((k,v)->log.warn("Check the payment  {} ", v));
+         kStream.filter((k, v)->v.amount()>10000)
+                 .peek((k,v)->log.warn("check the payment {} ", v))
+                 .to("stream-topic");
 
-
-        filterData.to("stream-topic");
-
-        return filterData;
+        return kStream;
     }
 
 
-    private Boolean alert(String value){
-       try {
-           Transaction transaction = new ObjectMapper().readValue(value, Transaction.class);
-           return transaction.amount()>10000;
-       } catch (IllegalArgumentException e) {
-           throw new RuntimeException(e);
-       }
-
-    }
 
 }
 
