@@ -12,5 +12,6 @@ spring:
         default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
         default.value.serde: com.kafka.serdes.TransactionSerdes
 
+      state-dir: D:\Stream-DB
 
         
